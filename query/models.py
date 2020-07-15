@@ -4,6 +4,9 @@ class Queries(models.Model):
     query = models.CharField(max_length=200)
     result_count = models.IntegerField(default=0)
 
+    def __str__(self):
+        return f"Query: {self.query} ({self.result_count} results)"
+
 
 class Users(models.Model):
     handle = models.CharField(max_length=200, unique=True)
@@ -16,24 +19,21 @@ class Results(models.Model):
     full_text = models.CharField(max_length=200)
     date = models.DateTimeField()
     query = models.ForeignKey(Queries, on_delete=models.CASCADE)
-    author = models.ForeignKey(Users, on_delete=models.CASCADE)
+    author = models.ForeignKey(Users, related_name="author", on_delete=models.CASCADE)
     hashtag = models.ManyToManyField(Hashtags)
+    mention = models.ManyToManyField(Users)
 
 
     def __str__(self):
-        print(self.author.name)
-        print("@" + self.author.handle)
-        print()
-        print(self.full_text)
-        if self.mention_set.all():
-            print()
-            for mention in self.mention_set.all():
-                print("@" + mention.user.handle)
-        if self.hashtag_set.all():
-            print()
-            for hashtag in self.hashtag_set.all():
-                print("#" + hashtag.text)
-
-class Mentions(models.Model):
-    result = models.ForeignKey(Results, on_delete=models.CASCADE)
-    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+        out = self.author.name + "\n\n"
+        out += "@" + self.author.handle + "\n\n"
+        out += self.full_text + "\n"
+        if self.mention.all():
+            out += "\n"
+            for mention in self.mention.all():
+                out += "@" + mention.user.handle + "\n"
+        if self.hashtag.all():
+            out += "\n"
+            for hashtag in self.hashtag.all():
+                out += "#" + hashtag.text + "\n"
+        return out
